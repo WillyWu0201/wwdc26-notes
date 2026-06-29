@@ -447,7 +447,7 @@ function render() {
 }
 
 function copyLink(id, btn) {
-  const url = location.origin + location.pathname + "#s=" + id;
+  const url = location.origin + location.pathname + "#s=" + id + (state.lang !== "zh" ? "&lang=" + state.lang : "");
   const done = () => { const o = btn.textContent; btn.textContent = T().copied; setTimeout(() => (btn.textContent = o), 1200); };
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(() => prompt("", url));
   else prompt("", url);
