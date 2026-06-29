@@ -71,7 +71,7 @@
 
   .ruler{margin:6px 0 16px}
   .ruler-track{position:relative;height:4px;background:#EDEDE8;border-radius:2px}
-  .tick{position:absolute;top:-3px;width:2px;height:10px;background:var(--line-strong);border-radius:1px;transform:translateX(-1px)}
+  .tick{position:absolute;top:-3px;width:2px;height:10px;background:var(--line-strong);border-radius:1px;transform:translateX(-5px);padding:0 4px;background-clip:content-box;box-sizing:content-box;cursor:pointer}
   .tick:hover{background:var(--accent);height:13px;top:-4.5px}
   .ruler-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px}
 
@@ -199,7 +199,8 @@ function catColor(cat) {
 }
 
 function cardHTML(s) {
-  const ticks = s.chapters.map(([t, name]) => `<span class="tick" style="left:${((t / s.duration) * 100).toFixed(2)}%" title="${fmt(t)} · ${esc(name)}"></span>`).join("");
+  const safeUrl = /^https?:\/\//i.test(s.url) ? s.url : "#";
+  const ticks = s.chapters.map(([t, name]) => `<a class="tick" href="${esc(safeUrl)}?time=${encodeURIComponent(t)}" target="_blank" rel="noopener" style="left:${((t / s.duration) * 100).toFixed(2)}%" title="${fmt(t)} · ${esc(name)} ↗"></a>`).join("");
   const pts = s.points.map((p) => `<li class="${p.hot ? "hot" : ""}">${md(p.text)}</li>`).join("");
   const apis = s.apis.map((a) => `<span class="api">${esc(a)}</span>`).join("");
   const starred = myInterest.has(s.id);
@@ -231,7 +232,7 @@ function cardHTML(s) {
     <div class="apis">${apis}</div>
     <p class="audience">${md(s.audience)}</p>
     <div class="card-foot">
-      <a class="src" href="${esc(s.url)}" target="_blank" rel="noopener">看原片 ↗</a>
+      <a class="src" href="${esc(safeUrl)}" target="_blank" rel="noopener">看原片 ↗</a>
       ${claimBtn}
     </div>
   </article>`;
