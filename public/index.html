@@ -247,7 +247,7 @@ const TT = {
     labelPoints: "重點", labelApis: "關鍵 API / 框架",
     star: "標記", starred: "已標記", markWatched: "標為已看", watched: "已看",
     claim: "認領", claimMine: "我已認領 · 取消", claimedBy: (n) => `${n} 認領中`, claimNote: "認領備註(選填,例如:我負責,週五前出筆記)",
-    src: "看原片 ↗", chapters: (n) => `${n} 章`,
+    detail: "詳解 →", src: "看原片 ↗", chapters: (n) => `${n} 章`,
     copyTitle: "複製此場連結", copied: "已複製", apiFilterTitle: (a) => `篩選使用 ${a} 的場次`,
     teamTitle: "團隊認領總覽", claimsWord: "場已認領", unclaimedWord: "場未認領", nobodyClaimed: "目前尚無人認領。",
     comments: "留言", addComment: "新增留言…", post: "送出", noComments: "還沒有留言。", del: "刪除", loginToComment: "登入後即可留言。",
@@ -267,7 +267,7 @@ const TT = {
     labelPoints: "Highlights", labelApis: "Key APIs / Frameworks",
     star: "Mark", starred: "Marked", markWatched: "Mark watched", watched: "Watched",
     claim: "Claim", claimMine: "Claimed by me · release", claimedBy: (n) => `Claimed by ${n}`, claimNote: "Claim note (optional, e.g. I'll cover this, notes by Fri)",
-    src: "Watch ↗", chapters: (n) => `${n} chapters`,
+    detail: "Details →", src: "Watch ↗", chapters: (n) => `${n} chapters`,
     copyTitle: "Copy link to this session", copied: "Copied", apiFilterTitle: (a) => `Filter sessions using ${a}`,
     teamTitle: "Team claims", claimsWord: "claimed", unclaimedWord: "unclaimed", nobodyClaimed: "No one has claimed a session yet.",
     comments: "Comments", addComment: "Add a comment…", post: "Post", noComments: "No comments yet.", del: "delete", loginToComment: "Sign in to comment.",
@@ -453,7 +453,10 @@ function cardHTML(s) {
     <p class="audience">${md(L(s, "audience"))}</p>
     ${c && c.note ? `<div class="claim-note">📌 ${esc(c.note)}</div>` : ""}
     <div class="card-foot">
-      <a class="src" href="${esc(safeUrl)}" target="_blank" rel="noopener">${t.src}</a>
+      <span class="foot-right">
+        <a class="src" href="/s/${esc(s.id)}${state.lang === "en" ? "?lang=en" : ""}">${t.detail}</a>
+        <a class="src" href="${esc(safeUrl)}" target="_blank" rel="noopener">${t.src}</a>
+      </span>
       <span class="foot-right">
         <button class="cmt-btn" data-cmt="${esc(s.id)}">💬 ${t.comments}${nComments ? ` (${nComments})` : ""}</button>
         ${claimBtn}
