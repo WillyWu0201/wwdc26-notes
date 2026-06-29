@@ -23,7 +23,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   const { id, action, note } = (await request.json()) as { id?: string; action?: string; note?: string };
-  if (typeof id !== "string") return Response.json({ error: "bad request" }, { status: 400 });
+  if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,32}$/.test(id)) return Response.json({ error: "bad request" }, { status: 400 });
 
   const map = await readMap(env);
 
