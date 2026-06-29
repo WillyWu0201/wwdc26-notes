@@ -9,13 +9,33 @@
     --bg:#FAFAF7; --surface:#FFFFFF; --ink:#18181B; --muted:#71717A; --faint:#A1A1AA;
     --line:#E8E8E3; --line-strong:#DBDBD4;
     --accent:#3B5BDB; --accent-soft:#EEF1FC;
-    --star:#D9881A; --star-soft:#FBF1DD;
-    --claim:#0F6E56; --claim-soft:#E1F5EE;
+    --star:#D9881A; --star-soft:#FBF1DD; --star-ink:#8a5a10;
+    --claim:#0F6E56; --claim-soft:#E1F5EE; --claim-ink:#0a513f;
+    --chip-bg:#F4F4F0; --track:#EDEDE8; --ink-soft:#27272A; --ink-mute:#3f3f46;
     --mono:"SF Mono",ui-monospace,"JetBrains Mono","Menlo","Cascadia Code",monospace;
     --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang TC","Noto Sans TC",system-ui,sans-serif;
   }
+  /* Dark palette — applied when user picks dark, or by system when not forced light. */
+  :root[data-theme="dark"]{
+    --bg:#0E0E10; --surface:#191A1D; --ink:#ECECEE; --muted:#9A9AA2; --faint:#6B6B73;
+    --line:#27272B; --line-strong:#37373D;
+    --accent:#8AA0F2; --accent-soft:#1C2138;
+    --star:#E0A23C; --star-soft:#332710; --star-ink:#E8B765;
+    --claim:#3FB593; --claim-soft:#102A22; --claim-ink:#6FD3B0;
+    --chip-bg:#232327; --track:#2A2A2F; --ink-soft:#D4D4D8; --ink-mute:#B4B4BC;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E0E10; --surface:#191A1D; --ink:#ECECEE; --muted:#9A9AA2; --faint:#6B6B73;
+      --line:#27272B; --line-strong:#37373D;
+      --accent:#8AA0F2; --accent-soft:#1C2138;
+      --star:#E0A23C; --star-soft:#332710; --star-ink:#E8B765;
+      --claim:#3FB593; --claim-soft:#102A22; --claim-ink:#6FD3B0;
+      --chip-bg:#232327; --track:#2A2A2F; --ink-soft:#D4D4D8; --ink-mute:#B4B4BC;
+    }
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:var(--ui);line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 20px 96px}
+  body{background:var(--bg);color:var(--ink);font-family:var(--ui);line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 20px 96px;transition:background .2s ease,color .2s ease}
   .wrap{max-width:880px;margin:0 auto}
   a{color:inherit}
 
@@ -24,14 +44,16 @@
   .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
   h1{font-size:29px;font-weight:680;letter-spacing:-.02em;line-height:1.12}
   .lede{color:var(--muted);font-size:15px;margin-top:10px;max-width:60ch}
-  .auth{flex:none;font-size:13px;display:flex;align-items:center;gap:10px;padding-top:4px}
+  .auth-row{flex:none;display:flex;align-items:center;gap:10px;padding-top:4px}
+  .auth{font-size:13px;display:flex;align-items:center;gap:10px}
   .auth .who{color:var(--muted)}
   .auth .who b{color:var(--ink);font-weight:600}
-  .auth button,.auth a{font-family:var(--ui);font-size:13px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:7px 15px;color:var(--ink);text-decoration:none;transition:all .15s ease}
-  .auth button:hover,.auth a:hover{border-color:var(--faint)}
-  .auth a.login{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .auth button,.auth a,.theme-btn{font-family:var(--ui);font-size:13px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:7px 15px;color:var(--ink);text-decoration:none;transition:all .15s ease}
+  .auth button:hover,.auth a:hover,.theme-btn:hover{border-color:var(--faint)}
+  .auth a.login{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .theme-btn{padding:7px 11px;font-size:15px;line-height:1}
 
-  .toolbar{position:sticky;top:0;z-index:20;background:rgba(250,250,247,.86);backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line);margin:14px -20px 0;padding:12px 20px}
+  .toolbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line);margin:14px -20px 0;padding:12px 20px}
   .toolbar-inner{max-width:880px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
   .search{flex:1 1 200px;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px}
   .search svg{flex:none;color:var(--faint)}
@@ -39,23 +61,31 @@
   .chips{display:flex;gap:6px;flex-wrap:wrap}
   .chip{font-family:var(--ui);font-size:13px;color:var(--muted);cursor:pointer;background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;padding:6px 13px;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px}
   .chip:hover{border-color:var(--faint);color:var(--ink)}
-  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
   .chip .cdot{width:7px;height:7px;border-radius:50%}
+  .chip .ct{color:var(--faint);font-variant-numeric:tabular-nums;font-size:12px}
+  .chip[aria-pressed="true"] .ct{color:var(--bg);opacity:.6}
   .toggle{font-size:13px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:6px 13px;transition:all .15s ease}
   .toggle:hover{color:var(--ink);border-color:var(--faint)}
-  .toggle[aria-pressed="true"]{background:var(--star-soft);border-color:var(--star);color:#8a5a10}
-  .toggle.t-claim[aria-pressed="true"]{background:var(--claim-soft);border-color:var(--claim);color:#0a513f}
+  .toggle[aria-pressed="true"]{background:var(--star-soft);border-color:var(--star);color:var(--star-ink)}
+  .toggle.t-claim[aria-pressed="true"]{background:var(--claim-soft);border-color:var(--claim);color:var(--claim-ink)}
+  .sortsel select{font-family:var(--ui);font-size:13px;color:var(--muted);cursor:pointer;background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;transition:all .15s ease}
+  .sortsel select:hover{border-color:var(--faint);color:var(--ink)}
+  .apifilter{font-family:var(--mono);font-size:12px;cursor:pointer;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:5px 11px;display:inline-flex;align-items:center;gap:6px}
+  .apifilter .x{font-weight:700}
 
-  .meta-row{max-width:880px;margin:14px auto 0;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:4px}
+  .meta-row{max-width:880px;margin:14px auto 0;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:4px;gap:12px;flex-wrap:wrap}
   .meta-row b{color:var(--muted);font-weight:500}
 
   .list{margin-top:18px;display:flex;flex-direction:column;gap:16px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px 18px;position:relative;transition:box-shadow .18s ease,border-color .18s ease}
-  .card:hover{box-shadow:0 6px 24px -12px rgba(24,24,27,.18);border-color:var(--line-strong)}
+  .card:hover{box-shadow:0 6px 24px -12px rgba(0,0,0,.28);border-color:var(--line-strong)}
   .card.starred{border-color:var(--star);box-shadow:inset 3px 0 0 var(--star)}
+  .card.flash{box-shadow:0 0 0 2px var(--accent)}
   .card.hidden{display:none}
   .card-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .sid{font-family:var(--mono);font-size:12px;color:var(--ink);background:#F4F4F0;border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-weight:600}
+  .sid{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--chip-bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .sid:hover{border-color:var(--accent);color:var(--accent)}
   .dur{font-family:var(--mono);font-size:12px;color:var(--faint)}
   .cat{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
   .cat .cdot{width:8px;height:8px;border-radius:50%}
@@ -70,41 +100,43 @@
   .takeaway{font-size:15px;font-weight:500;margin:12px 0;padding-left:13px;border-left:2px solid var(--accent);color:var(--ink)}
 
   .ruler{margin:6px 0 16px}
-  .ruler-track{position:relative;height:4px;background:#EDEDE8;border-radius:2px}
+  .ruler-track{position:relative;height:4px;background:var(--track);border-radius:2px}
   .tick{position:absolute;top:-3px;width:2px;height:10px;background:var(--line-strong);border-radius:1px;transform:translateX(-5px);padding:0 4px;background-clip:content-box;box-sizing:content-box;cursor:pointer}
   .tick:hover{background:var(--accent);height:13px;top:-4.5px}
   .ruler-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px}
 
   .label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:14px 0 7px;font-weight:600}
   ul.points{list-style:none;display:flex;flex-direction:column;gap:7px}
-  ul.points li{font-size:14px;color:#27272A;padding-left:18px;position:relative;line-height:1.5}
+  ul.points li{font-size:14px;color:var(--ink-soft);padding-left:18px;position:relative;line-height:1.5}
   ul.points li::before{content:"";position:absolute;left:3px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.55}
   ul.points li strong{font-weight:620;color:var(--ink)}
   ul.points li.hot{background:var(--star-soft);box-shadow:0 0 0 1px var(--star-soft);border-radius:5px;padding:1px 4px 1px 18px}
-  ul.points li.hot strong{color:#8a5a10}
+  ul.points li.hot strong{color:var(--star-ink)}
 
   .apis{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-  .api{font-family:var(--mono);font-size:11.5px;color:#3f3f46;background:#F4F4F0;border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .api{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);background:var(--chip-bg);border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;transition:all .15s ease}
+  .api:hover{border-color:var(--accent);color:var(--accent)}
   .audience{font-size:13.5px;color:var(--muted);margin-top:14px;line-height:1.5}
-  .audience b{color:#3f3f46;font-weight:600}
+  .audience b{color:var(--ink-mute);font-weight:600}
 
   .card-foot{margin-top:16px;padding-top:13px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .src{font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
   .src:hover{text-decoration:underline}
   .claim-btn{font-family:var(--ui);font-size:12px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--muted);border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
   .claim-btn:hover{border-color:var(--claim);color:var(--claim)}
-  .claim-btn.mine{background:var(--claim-soft);border-color:var(--claim);color:#0a513f}
-  .claim-btn.taken{background:#F4F4F0;border-color:var(--line);color:var(--muted);cursor:default}
+  .claim-btn.mine{background:var(--claim-soft);border-color:var(--claim);color:var(--claim-ink)}
+  .claim-btn.taken{background:var(--chip-bg);border-color:var(--line);color:var(--muted);cursor:default}
   .claim-btn .cdot{width:7px;height:7px;border-radius:50%;background:var(--claim)}
 
   .empty{text-align:center;color:var(--faint);font-size:14px;padding:48px 0}
   footer{max-width:880px;margin:40px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint);line-height:1.6}
-  footer code{font-family:var(--mono);background:#F4F4F0;padding:1px 5px;border-radius:4px;color:#3f3f46}
+  footer code{font-family:var(--mono);background:var(--chip-bg);padding:1px 5px;border-radius:4px;color:var(--ink-mute)}
 
   @media (max-width:560px){h1{font-size:23px} header{flex-direction:column} .card{padding:18px 16px 16px}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 </style>
+<script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 </head>
 <body>
 <div class="wrap">
@@ -114,7 +146,10 @@
       <h1>Apple 開發者 Session 筆記</h1>
       <p class="lede">掃過清單,星號標記你想深入的(跨裝置同步),「認領」讓團隊看到誰負責哪一場、避免重複。</p>
     </div>
-    <div class="auth" id="auth"></div>
+    <div class="auth-row">
+      <button id="themeBtn" class="theme-btn" title="切換深色 / 淺色" aria-label="切換主題">🌙</button>
+      <div class="auth" id="auth"></div>
+    </div>
   </header>
 </div>
 
@@ -128,12 +163,19 @@
     <button class="toggle" id="starredOnly" aria-pressed="false"><span style="color:var(--star)">★</span> 只看我標記的</button>
     <button class="toggle t-claim" id="unclaimedOnly" aria-pressed="false">尚未認領</button>
     <button class="toggle t-claim" id="mineClaimedOnly" aria-pressed="false">只看我認領的</button>
+    <button class="toggle" id="hotOnly" aria-pressed="false">🔥 重點</button>
+    <span class="sortsel"><select id="sort" aria-label="排序">
+      <option value="id">場次編號</option>
+      <option value="dur-asc">時長 短→長</option>
+      <option value="dur-desc">時長 長→短</option>
+    </select></span>
+    <span id="apiFilter" class="apifilter" hidden></span>
   </div>
 </div>
 
 <div class="meta-row">
   <span><b id="count">0</b> 場顯示中</span>
-  <span>我標記 <b id="starCount">0</b> · 已認領 <b id="claimCount">0</b></span>
+  <span>我標記 <b id="starCount">0</b> · 共 <b id="starTime">0m</b> · 已認領 <b id="claimCount">0</b></span>
 </div>
 
 <div class="wrap">
@@ -146,14 +188,56 @@
 
 <script>
 let SESSIONS = [], me = null, myInterest = new Set(), claimed = {};
-const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false, mineClaimedOnly: false };
+const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false, mineClaimedOnly: false, hotOnly: false, sort: "id", api: "" };
 
 const $ = (id) => document.getElementById(id);
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const human = (sec) => { const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60); return h ? `${h}h ${m}m` : `${m}m`; };
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
+// ---- theme ----
+function effectiveTheme() {
+  const a = document.documentElement.getAttribute("data-theme");
+  return a || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+function applyThemeBtn() { $("themeBtn").textContent = effectiveTheme() === "dark" ? "☀️" : "🌙"; }
+function toggleTheme() {
+  const next = effectiveTheme() === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("theme", next); } catch (e) {}
+  applyThemeBtn();
+}
+
+// ---- shareable URL state ----
+function readHash() {
+  const p = new URLSearchParams(location.hash.replace(/^#/, ""));
+  if (p.has("cat")) state.cat = p.get("cat");
+  if (p.has("q")) state.q = p.get("q");
+  if (p.has("sort")) state.sort = p.get("sort");
+  state.hotOnly = p.get("hot") === "1";
+  state.starredOnly = p.get("star") === "1";
+  state.unclaimedOnly = p.get("unclaimed") === "1";
+  state.mineClaimedOnly = p.get("mine") === "1";
+  if (p.has("api")) state.api = p.get("api");
+  return p.get("s"); // one-shot deep-link target
+}
+function writeHash() {
+  const p = new URLSearchParams();
+  if (state.cat !== "all") p.set("cat", state.cat);
+  if (state.q) p.set("q", state.q);
+  if (state.sort !== "id") p.set("sort", state.sort);
+  if (state.hotOnly) p.set("hot", "1");
+  if (state.starredOnly) p.set("star", "1");
+  if (state.unclaimedOnly) p.set("unclaimed", "1");
+  if (state.mineClaimedOnly) p.set("mine", "1");
+  if (state.api) p.set("api", state.api);
+  const s = p.toString();
+  history.replaceState(null, "", s ? "#" + s : location.pathname + location.search);
+}
+
 async function boot() {
+  const target = readHash();
   const [sData, meData, clData] = await Promise.all([
     fetch("data/sessions.json").then((r) => r.json()).catch(() => []),
     fetch("/api/me").then((r) => r.json()).catch(() => ({ user: null })),
@@ -165,10 +249,20 @@ async function boot() {
   if (me) {
     const i = await fetch("/api/interest").then((r) => r.json()).catch(() => ({ ids: [] }));
     myInterest = new Set(i.ids || []);
+  } else {
+    state.starredOnly = false; // personal filters need a login to mean anything
+    state.mineClaimedOnly = false;
   }
   buildChips();
   renderAuth();
+  applyThemeBtn();
+  $("search").value = state.q;
+  $("sort").value = state.sort;
   render();
+  if (target) {
+    const el = document.getElementById("s-" + target);
+    if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600); }
+  }
 }
 
 function renderAuth() {
@@ -178,20 +272,18 @@ function renderAuth() {
 }
 
 function buildChips() {
+  const counts = {};
+  for (const s of SESSIONS) counts[s.category] = (counts[s.category] || 0) + 1;
   const cats = [];
   const seen = new Set();
   for (const s of SESSIONS) {
     if (!seen.has(s.category)) { seen.add(s.category); cats.push({ cat: s.category, label: s.categoryLabel, color: catColor(s.category) }); }
   }
   $("chips").innerHTML =
-    `<button class="chip" data-cat="all" aria-pressed="true">全部</button>` +
-    cats.map((c) => `<button class="chip" data-cat="${c.cat}" aria-pressed="false"><span class="cdot" style="background:${c.color}"></span>${esc(c.label)}</button>`).join("");
+    `<button class="chip" data-cat="all" aria-pressed="true">全部 <span class="ct">${SESSIONS.length}</span></button>` +
+    cats.map((c) => `<button class="chip" data-cat="${c.cat}" aria-pressed="false"><span class="cdot" style="background:${c.color}"></span>${esc(c.label)} <span class="ct">${counts[c.cat]}</span></button>`).join("");
   $("chips").querySelectorAll(".chip").forEach((b) =>
-    b.addEventListener("click", () => {
-      state.cat = b.dataset.cat;
-      $("chips").querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
-      render();
-    })
+    b.addEventListener("click", () => { state.cat = b.dataset.cat; render(); })
   );
 }
 
@@ -203,7 +295,7 @@ function cardHTML(s) {
   const safeUrl = /^https?:\/\//i.test(s.url) ? s.url : "#";
   const ticks = s.chapters.map(([t, name]) => `<a class="tick" href="${esc(safeUrl)}?time=${encodeURIComponent(t)}" target="_blank" rel="noopener" style="left:${((t / s.duration) * 100).toFixed(2)}%" title="${fmt(t)} · ${esc(name)} ↗"></a>`).join("");
   const pts = s.points.map((p) => `<li class="${p.hot ? "hot" : ""}">${md(p.text)}</li>`).join("");
-  const apis = s.apis.map((a) => `<span class="api">${esc(a)}</span>`).join("");
+  const apis = s.apis.map((a) => `<span class="api" data-api="${esc(a)}" title="篩選使用 ${esc(a)} 的場次">${esc(a)}</span>`).join("");
   const starred = myInterest.has(s.id);
   const c = claimed[s.id];
   const mine = c && me && c.email === me.email;
@@ -212,9 +304,9 @@ function cardHTML(s) {
   else if (mine) claimBtn = `<button class="claim-btn mine" data-claim="${s.id}"><span class="cdot"></span>我已認領 · 取消</button>`;
   else claimBtn = `<button class="claim-btn" data-claim="${s.id}">認領</button>`;
 
-  return `<article class="card${starred ? " starred" : ""}" data-id="${s.id}">
+  return `<article class="card${starred ? " starred" : ""}" id="s-${esc(s.id)}" data-id="${esc(s.id)}">
     <div class="card-top">
-      <span class="sid">${esc(s.id)}</span>
+      <span class="sid" data-copy="${esc(s.id)}" title="複製此場連結">${esc(s.id)}</span>
       <span class="dur">${fmt(s.duration)}</span>
       <span class="cat"><span class="cdot" style="background:${catColor(s.category)}"></span>${esc(s.categoryLabel)}</span>
       <span class="spacer"></span>
@@ -244,6 +336,8 @@ function matches(s) {
   if (state.starredOnly && !myInterest.has(s.id)) return false;
   if (state.unclaimedOnly && claimed[s.id]) return false;
   if (state.mineClaimedOnly && !(me && claimed[s.id] && claimed[s.id].email === me.email)) return false;
+  if (state.hotOnly && !s.points.some((p) => p.hot)) return false;
+  if (state.api && !(s.apis || []).includes(state.api)) return false;
   if (state.q) {
     const hay = (s.title + " " + s.gloss + " " + s.takeaway + " " + s.apis.join(" ") + " " + s.categoryLabel + " " + s.points.map((p) => p.text).join(" ")).toLowerCase();
     if (!hay.includes(state.q.toLowerCase())) return false;
@@ -251,15 +345,40 @@ function matches(s) {
   return true;
 }
 
+function reflectControls() {
+  for (const [id, on] of [["starredOnly", state.starredOnly], ["unclaimedOnly", state.unclaimedOnly], ["mineClaimedOnly", state.mineClaimedOnly], ["hotOnly", state.hotOnly]])
+    $(id).setAttribute("aria-pressed", on ? "true" : "false");
+  $("chips").querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c.dataset.cat === state.cat ? "true" : "false"));
+}
+
 function render() {
-  const shown = SESSIONS.filter(matches);
+  let shown = SESSIONS.filter(matches);
+  if (state.sort === "dur-asc") shown = shown.slice().sort((a, b) => a.duration - b.duration);
+  else if (state.sort === "dur-desc") shown = shown.slice().sort((a, b) => b.duration - a.duration);
   $("list").innerHTML = shown.map(cardHTML).join("");
   $("empty").style.display = shown.length ? "none" : "block";
   $("count").textContent = shown.length;
   $("starCount").textContent = myInterest.size;
+  let secs = 0;
+  for (const s of SESSIONS) if (myInterest.has(s.id)) secs += s.duration || 0;
+  $("starTime").textContent = human(secs);
   $("claimCount").textContent = Object.keys(claimed).length;
+  const af = $("apiFilter");
+  if (state.api) { af.hidden = false; af.innerHTML = `API: <b>${esc(state.api)}</b> <span class="x">✕</span>`; }
+  else af.hidden = true;
+  reflectControls();
+  writeHash();
   $("list").querySelectorAll("[data-star]").forEach((b) => b.addEventListener("click", () => toggleInterest(b.dataset.star)));
   $("list").querySelectorAll("[data-claim]").forEach((b) => b.addEventListener("click", () => toggleClaim(b.dataset.claim)));
+  $("list").querySelectorAll("[data-api]").forEach((b) => b.addEventListener("click", () => { state.api = b.dataset.api; render(); }));
+  $("list").querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => copyLink(b.dataset.copy, b)));
+}
+
+function copyLink(id, btn) {
+  const url = location.origin + location.pathname + "#s=" + id;
+  const done = () => { const o = btn.textContent; btn.textContent = "已複製"; setTimeout(() => (btn.textContent = o), 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(() => prompt("複製此連結:", url));
+  else prompt("複製此連結:", url);
 }
 
 async function toggleInterest(id) {
@@ -289,23 +408,13 @@ async function toggleClaim(id) {
 }
 
 $("search").addEventListener("input", (e) => { state.q = e.target.value; render(); });
-$("starredOnly").addEventListener("click", () => {
-  if (!me) return (location.href = "/api/auth/login");
-  state.starredOnly = !state.starredOnly;
-  $("starredOnly").setAttribute("aria-pressed", state.starredOnly ? "true" : "false");
-  render();
-});
-$("unclaimedOnly").addEventListener("click", () => {
-  state.unclaimedOnly = !state.unclaimedOnly;
-  $("unclaimedOnly").setAttribute("aria-pressed", state.unclaimedOnly ? "true" : "false");
-  render();
-});
-$("mineClaimedOnly").addEventListener("click", () => {
-  if (!me) return (location.href = "/api/auth/login");
-  state.mineClaimedOnly = !state.mineClaimedOnly;
-  $("mineClaimedOnly").setAttribute("aria-pressed", state.mineClaimedOnly ? "true" : "false");
-  render();
-});
+$("sort").addEventListener("change", (e) => { state.sort = e.target.value; render(); });
+$("hotOnly").addEventListener("click", () => { state.hotOnly = !state.hotOnly; render(); });
+$("starredOnly").addEventListener("click", () => { if (!me) return (location.href = "/api/auth/login"); state.starredOnly = !state.starredOnly; render(); });
+$("unclaimedOnly").addEventListener("click", () => { state.unclaimedOnly = !state.unclaimedOnly; render(); });
+$("mineClaimedOnly").addEventListener("click", () => { if (!me) return (location.href = "/api/auth/login"); state.mineClaimedOnly = !state.mineClaimedOnly; render(); });
+$("apiFilter").addEventListener("click", () => { state.api = ""; render(); });
+$("themeBtn").addEventListener("click", toggleTheme);
 
 boot();
 </script>
