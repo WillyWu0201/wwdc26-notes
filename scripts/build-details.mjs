@@ -41,6 +41,7 @@ for (const s of sessions) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escTitle(s.title)} · WWDC26</title>
+<link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/s/detail.css">
 <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 </head>
