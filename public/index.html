@@ -127,6 +127,7 @@
     <div class="chips" id="chips"></div>
     <button class="toggle" id="starredOnly" aria-pressed="false"><span style="color:var(--star)">★</span> 只看我標記的</button>
     <button class="toggle t-claim" id="unclaimedOnly" aria-pressed="false">尚未認領</button>
+    <button class="toggle t-claim" id="mineClaimedOnly" aria-pressed="false">只看我認領的</button>
   </div>
 </div>
 
@@ -145,7 +146,7 @@
 
 <script>
 let SESSIONS = [], me = null, myInterest = new Set(), claimed = {};
-const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false };
+const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false, mineClaimedOnly: false };
 
 const $ = (id) => document.getElementById(id);
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -242,6 +243,7 @@ function matches(s) {
   if (state.cat !== "all" && s.category !== state.cat) return false;
   if (state.starredOnly && !myInterest.has(s.id)) return false;
   if (state.unclaimedOnly && claimed[s.id]) return false;
+  if (state.mineClaimedOnly && !(me && claimed[s.id] && claimed[s.id].email === me.email)) return false;
   if (state.q) {
     const hay = (s.title + " " + s.gloss + " " + s.takeaway + " " + s.apis.join(" ") + " " + s.categoryLabel + " " + s.points.map((p) => p.text).join(" ")).toLowerCase();
     if (!hay.includes(state.q.toLowerCase())) return false;
@@ -296,6 +298,12 @@ $("starredOnly").addEventListener("click", () => {
 $("unclaimedOnly").addEventListener("click", () => {
   state.unclaimedOnly = !state.unclaimedOnly;
   $("unclaimedOnly").setAttribute("aria-pressed", state.unclaimedOnly ? "true" : "false");
+  render();
+});
+$("mineClaimedOnly").addEventListener("click", () => {
+  if (!me) return (location.href = "/api/auth/login");
+  state.mineClaimedOnly = !state.mineClaimedOnly;
+  $("mineClaimedOnly").setAttribute("aria-pressed", state.mineClaimedOnly ? "true" : "false");
   render();
 });
 
