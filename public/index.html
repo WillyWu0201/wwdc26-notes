@@ -142,12 +142,13 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow"><span class="dot"></span>WWDC26 · 開發者筆記</div>
-      <h1>Apple 開發者 Session 筆記</h1>
-      <p class="lede">掃過清單,星號標記你想深入的(跨裝置同步),「認領」讓團隊看到誰負責哪一場、避免重複。</p>
+      <div class="eyebrow"><span class="dot"></span>WWDC26 · Developer Notes</div>
+      <h1 id="pageTitle">Apple 開發者 Session 筆記</h1>
+      <p class="lede" id="lede"></p>
     </div>
     <div class="auth-row">
-      <button id="themeBtn" class="theme-btn" title="切換深色 / 淺色" aria-label="切換主題">🌙</button>
+      <button id="langBtn" class="theme-btn" title="中文 / English" aria-label="Language">EN</button>
+      <button id="themeBtn" class="theme-btn" title="切換深色 / 淺色" aria-label="切換主題 / Toggle theme">🌙</button>
       <div class="auth" id="auth"></div>
     </div>
   </header>
@@ -157,38 +158,36 @@
   <div class="toolbar-inner">
     <div class="search">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="search" type="text" placeholder="搜尋標題、API、關鍵字…" autocomplete="off">
+      <input id="search" type="text" autocomplete="off">
     </div>
     <div class="chips" id="chips"></div>
-    <button class="toggle" id="starredOnly" aria-pressed="false"><span style="color:var(--star)">★</span> 只看我標記的</button>
-    <button class="toggle t-claim" id="unclaimedOnly" aria-pressed="false">尚未認領</button>
-    <button class="toggle t-claim" id="mineClaimedOnly" aria-pressed="false">只看我認領的</button>
-    <button class="toggle" id="hotOnly" aria-pressed="false">🔥 重點</button>
-    <span class="sortsel"><select id="sort" aria-label="排序">
-      <option value="id">場次編號</option>
-      <option value="dur-asc">時長 短→長</option>
-      <option value="dur-desc">時長 長→短</option>
+    <button class="toggle" id="starredOnly" aria-pressed="false"></button>
+    <button class="toggle t-claim" id="unclaimedOnly" aria-pressed="false"></button>
+    <button class="toggle t-claim" id="mineClaimedOnly" aria-pressed="false"></button>
+    <button class="toggle" id="hotOnly" aria-pressed="false"></button>
+    <span class="sortsel"><select id="sort" aria-label="Sort">
+      <option value="id"></option>
+      <option value="dur-asc"></option>
+      <option value="dur-desc"></option>
     </select></span>
     <span id="apiFilter" class="apifilter" hidden></span>
   </div>
 </div>
 
 <div class="meta-row">
-  <span><b id="count">0</b> 場顯示中</span>
-  <span>我標記 <b id="starCount">0</b> · 共 <b id="starTime">0m</b> · 已認領 <b id="claimCount">0</b></span>
+  <span id="metaLeft"></span>
+  <span id="metaRight"></span>
 </div>
 
 <div class="wrap">
   <div class="list" id="list"></div>
-  <div class="empty" id="empty" style="display:none">沒有符合條件的 session。</div>
-  <footer>
-    瀏覽無需登入。第一次按「標記」或「認領」時會用 Google 登入一次,之後跨裝置都記得你。原始資料來源:<code>developer.apple.com/videos/wwdc2026</code>。
-  </footer>
+  <div class="empty" id="empty" style="display:none"></div>
+  <footer id="footer"></footer>
 </div>
 
 <script>
 let SESSIONS = [], me = null, myInterest = new Set(), claimed = {};
-const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false, mineClaimedOnly: false, hotOnly: false, sort: "id", api: "" };
+const state = { cat: "all", q: "", starredOnly: false, unclaimedOnly: false, mineClaimedOnly: false, hotOnly: false, sort: "id", api: "", lang: "zh" };
 
 const $ = (id) => document.getElementById(id);
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -196,17 +195,69 @@ const human = (sec) => { const h = Math.floor(sec / 3600), m = Math.round((sec %
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
-// ---- theme ----
-function effectiveTheme() {
-  const a = document.documentElement.getAttribute("data-theme");
-  return a || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+// ---- i18n ----
+const TT = {
+  zh: {
+    htmlLang: "zh-Hant",
+    lede: "掃過清單,星號標記你想深入的(跨裝置同步),「認領」讓團隊看到誰負責哪一場、避免重複。",
+    search: "搜尋標題、API、關鍵字…",
+    chipAll: "全部",
+    tStarred: `<span style="color:var(--star)">★</span> 只看我標記的`, tUnclaimed: "尚未認領", tMineClaimed: "只看我認領的", tHot: "🔥 重點",
+    sortId: "場次編號", sortAsc: "時長 短→長", sortDesc: "時長 長→短",
+    shown: (n) => `${n} 場顯示中`,
+    stats: (m, t, c) => `我標記 <b>${m}</b> · 共 <b>${t}</b> · 已認領 <b>${c}</b>`,
+    labelPoints: "重點", labelApis: "關鍵 API / 框架",
+    star: "標記", starred: "已標記", claim: "認領", claimMine: "我已認領 · 取消", claimedBy: (n) => `${n} 認領中`,
+    src: "看原片 ↗", chapters: (n) => `${n} 章`,
+    copyTitle: "複製此場連結", copied: "已複製", apiFilterTitle: (a) => `篩選使用 ${a} 的場次`,
+    empty: "沒有符合條件的 session。",
+    footer: `瀏覽無需登入。第一次按「標記」或「認領」時會用 Google 登入一次,之後跨裝置都記得你。原始資料來源:<code>developer.apple.com/videos/wwdc2026</code>。`,
+    hi: (n) => `嗨,<b>${n}</b>`, logout: "登出", login: "用 Google 登入",
+  },
+  en: {
+    htmlLang: "en",
+    lede: "Skim the list, star the ones you want to dig into (synced across devices); “claim” lets your team see who's covering what and avoid duplicate work.",
+    search: "Search title, API, keyword…",
+    chipAll: "All",
+    tStarred: `<span style="color:var(--star)">★</span> My marks`, tUnclaimed: "Unclaimed", tMineClaimed: "My claims", tHot: "🔥 Key",
+    sortId: "Session #", sortAsc: "Duration ↑", sortDesc: "Duration ↓",
+    shown: (n) => `${n} shown`,
+    stats: (m, t, c) => `Marked <b>${m}</b> · <b>${t}</b> total · Claimed <b>${c}</b>`,
+    labelPoints: "Highlights", labelApis: "Key APIs / Frameworks",
+    star: "Mark", starred: "Marked", claim: "Claim", claimMine: "Claimed by me · release", claimedBy: (n) => `Claimed by ${n}`,
+    src: "Watch ↗", chapters: (n) => `${n} chapters`,
+    copyTitle: "Copy link to this session", copied: "Copied", apiFilterTitle: (a) => `Filter sessions using ${a}`,
+    empty: "No sessions match.",
+    footer: `Browsing needs no sign-in. The first time you mark or claim, you sign in once with Google; after that it's remembered across devices. Source: <code>developer.apple.com/videos/wwdc2026</code>.`,
+    hi: (n) => `Hi, <b>${n}</b>`, logout: "Sign out", login: "Sign in with Google",
+  },
+};
+const CATLABEL_EN = { swift: "Swift", uikit: "UIKit", swiftui: "SwiftUI", testing: "Testing", ai: "AI & ML", design: "Design", appstore: "App Store", graphics: "Graphics & Games", visionos: "visionOS", other: "Other" };
+const T = () => TT[state.lang];
+// localized session content (en falls back to zh if a field is missing)
+function L(s, field) {
+  if (state.lang === "en") {
+    if (field === "points") return s.points_en || s.points;
+    if (field === "categoryLabel") return CATLABEL_EN[s.category] || s.categoryLabel;
+    return s[field + "_en"] || s[field];
+  }
+  return field === "categoryLabel" ? s.categoryLabel : s[field];
 }
+function catLabel(s) { return L(s, "categoryLabel"); }
+
+// ---- theme ----
+function effectiveTheme() { const a = document.documentElement.getAttribute("data-theme"); return a || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
 function applyThemeBtn() { $("themeBtn").textContent = effectiveTheme() === "dark" ? "☀️" : "🌙"; }
 function toggleTheme() {
   const next = effectiveTheme() === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
   try { localStorage.setItem("theme", next); } catch (e) {}
   applyThemeBtn();
+}
+function toggleLang() {
+  state.lang = state.lang === "en" ? "zh" : "en";
+  try { localStorage.setItem("lang", state.lang); } catch (e) {}
+  applyLang();
 }
 
 // ---- shareable URL state ----
@@ -220,7 +271,9 @@ function readHash() {
   state.unclaimedOnly = p.get("unclaimed") === "1";
   state.mineClaimedOnly = p.get("mine") === "1";
   if (p.has("api")) state.api = p.get("api");
-  return p.get("s"); // one-shot deep-link target
+  if (p.has("lang")) state.lang = p.get("lang");
+  else { try { const l = localStorage.getItem("lang"); if (l) state.lang = l; } catch (e) {} }
+  return p.get("s");
 }
 function writeHash() {
   const p = new URLSearchParams();
@@ -232,6 +285,7 @@ function writeHash() {
   if (state.unclaimedOnly) p.set("unclaimed", "1");
   if (state.mineClaimedOnly) p.set("mine", "1");
   if (state.api) p.set("api", state.api);
+  if (state.lang !== "zh") p.set("lang", state.lang);
   const s = p.toString();
   history.replaceState(null, "", s ? "#" + s : location.pathname + location.search);
 }
@@ -250,25 +304,43 @@ async function boot() {
     const i = await fetch("/api/interest").then((r) => r.json()).catch(() => ({ ids: [] }));
     myInterest = new Set(i.ids || []);
   } else {
-    state.starredOnly = false; // personal filters need a login to mean anything
+    state.starredOnly = false;
     state.mineClaimedOnly = false;
   }
-  buildChips();
-  renderAuth();
   applyThemeBtn();
-  $("search").value = state.q;
   $("sort").value = state.sort;
-  render();
+  applyLang(); // sets all UI text, rebuilds chips, renders cards
   if (target) {
     const el = document.getElementById("s-" + target);
     if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600); }
   }
 }
 
+// apply current language to all static UI + re-render
+function applyLang() {
+  const t = T();
+  document.documentElement.lang = t.htmlLang;
+  $("langBtn").textContent = state.lang === "en" ? "中" : "EN";
+  $("pageTitle").textContent = state.lang === "en" ? "Apple Developer Session Notes" : "Apple 開發者 Session 筆記";
+  $("lede").textContent = t.lede;
+  $("search").placeholder = t.search;
+  $("starredOnly").innerHTML = t.tStarred;
+  $("unclaimedOnly").textContent = t.tUnclaimed;
+  $("mineClaimedOnly").textContent = t.tMineClaimed;
+  $("hotOnly").textContent = t.tHot;
+  const so = $("sort").options; so[0].textContent = t.sortId; so[1].textContent = t.sortAsc; so[2].textContent = t.sortDesc;
+  $("footer").innerHTML = t.footer;
+  $("empty").textContent = t.empty;
+  buildChips();
+  renderAuth();
+  render();
+}
+
 function renderAuth() {
+  const t = T();
   $("auth").innerHTML = me
-    ? `<span class="who">嗨,<b>${esc(me.name)}</b></span><a href="/api/auth/logout">登出</a>`
-    : `<a class="login" href="/api/auth/login">用 Google 登入</a>`;
+    ? `<span class="who">${t.hi(esc(me.name))}</span><a href="/api/auth/logout">${t.logout}</a>`
+    : `<a class="login" href="/api/auth/login">${t.login}</a>`;
 }
 
 function buildChips() {
@@ -276,15 +348,14 @@ function buildChips() {
   for (const s of SESSIONS) counts[s.category] = (counts[s.category] || 0) + 1;
   const cats = [];
   const seen = new Set();
-  for (const s of SESSIONS) {
-    if (!seen.has(s.category)) { seen.add(s.category); cats.push({ cat: s.category, label: s.categoryLabel, color: catColor(s.category) }); }
-  }
+  for (const s of SESSIONS) { if (!seen.has(s.category)) { seen.add(s.category); cats.push({ cat: s.category, zh: s.categoryLabel }); } }
   $("chips").innerHTML =
-    `<button class="chip" data-cat="all" aria-pressed="true">全部 <span class="ct">${SESSIONS.length}</span></button>` +
-    cats.map((c) => `<button class="chip" data-cat="${c.cat}" aria-pressed="false"><span class="cdot" style="background:${c.color}"></span>${esc(c.label)} <span class="ct">${counts[c.cat]}</span></button>`).join("");
-  $("chips").querySelectorAll(".chip").forEach((b) =>
-    b.addEventListener("click", () => { state.cat = b.dataset.cat; render(); })
-  );
+    `<button class="chip" data-cat="all" aria-pressed="${state.cat === "all"}">${T().chipAll} <span class="ct">${SESSIONS.length}</span></button>` +
+    cats.map((c) => {
+      const label = state.lang === "en" ? (CATLABEL_EN[c.cat] || c.cat) : c.zh;
+      return `<button class="chip" data-cat="${c.cat}" aria-pressed="${state.cat === c.cat}"><span class="cdot" style="background:${catColor(c.cat)}"></span>${esc(label)} <span class="ct">${counts[c.cat]}</span></button>`;
+    }).join("");
+  $("chips").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { state.cat = b.dataset.cat; render(); }));
 }
 
 function catColor(cat) {
@@ -292,40 +363,41 @@ function catColor(cat) {
 }
 
 function cardHTML(s) {
+  const t = T();
   const safeUrl = /^https?:\/\//i.test(s.url) ? s.url : "#";
-  const ticks = s.chapters.map(([t, name]) => `<a class="tick" href="${esc(safeUrl)}?time=${encodeURIComponent(t)}" target="_blank" rel="noopener" style="left:${((t / s.duration) * 100).toFixed(2)}%" title="${fmt(t)} · ${esc(name)} ↗"></a>`).join("");
-  const pts = s.points.map((p) => `<li class="${p.hot ? "hot" : ""}">${md(p.text)}</li>`).join("");
-  const apis = s.apis.map((a) => `<span class="api" data-api="${esc(a)}" title="篩選使用 ${esc(a)} 的場次">${esc(a)}</span>`).join("");
+  const ticks = s.chapters.map(([sec, name]) => `<a class="tick" href="${esc(safeUrl)}?time=${encodeURIComponent(sec)}" target="_blank" rel="noopener" style="left:${((sec / s.duration) * 100).toFixed(2)}%" title="${fmt(sec)} · ${esc(name)} ↗"></a>`).join("");
+  const pts = L(s, "points").map((p) => `<li class="${p.hot ? "hot" : ""}">${md(p.text)}</li>`).join("");
+  const apis = s.apis.map((a) => `<span class="api" data-api="${esc(a)}" title="${esc(t.apiFilterTitle(a))}">${esc(a)}</span>`).join("");
   const starred = myInterest.has(s.id);
   const c = claimed[s.id];
   const mine = c && me && c.email === me.email;
   let claimBtn;
-  if (c && !mine) claimBtn = `<span class="claim-btn taken"><span class="cdot"></span>${esc(c.name)} 認領中</span>`;
-  else if (mine) claimBtn = `<button class="claim-btn mine" data-claim="${s.id}"><span class="cdot"></span>我已認領 · 取消</button>`;
-  else claimBtn = `<button class="claim-btn" data-claim="${s.id}">認領</button>`;
+  if (c && !mine) claimBtn = `<span class="claim-btn taken"><span class="cdot"></span>${t.claimedBy(esc(c.name))}</span>`;
+  else if (mine) claimBtn = `<button class="claim-btn mine" data-claim="${s.id}"><span class="cdot"></span>${t.claimMine}</button>`;
+  else claimBtn = `<button class="claim-btn" data-claim="${s.id}">${t.claim}</button>`;
 
   return `<article class="card${starred ? " starred" : ""}" id="s-${esc(s.id)}" data-id="${esc(s.id)}">
     <div class="card-top">
-      <span class="sid" data-copy="${esc(s.id)}" title="複製此場連結">${esc(s.id)}</span>
+      <span class="sid" data-copy="${esc(s.id)}" title="${esc(t.copyTitle)}">${esc(s.id)}</span>
       <span class="dur">${fmt(s.duration)}</span>
-      <span class="cat"><span class="cdot" style="background:${catColor(s.category)}"></span>${esc(s.categoryLabel)}</span>
+      <span class="cat"><span class="cdot" style="background:${catColor(s.category)}"></span>${esc(catLabel(s))}</span>
       <span class="spacer"></span>
-      <button class="star-btn${starred ? " on" : ""}" data-star="${s.id}" aria-pressed="${starred}" title="標記為待深入">
+      <button class="star-btn${starred ? " on" : ""}" data-star="${s.id}" aria-pressed="${starred}" title="${esc(t.star)}">
         <svg viewBox="0 0 24 24" fill="${starred ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 18.9 6.1 21l1.2-6.5L2.5 9.9l6.6-.9z"/></svg>
-        ${starred ? "已標記" : "標記"}
+        ${starred ? t.starred : t.star}
       </button>
     </div>
     <h2>${esc(s.title)}</h2>
-    <div class="gloss">${esc(s.gloss)}</div>
-    <p class="takeaway">${md(s.takeaway)}</p>
-    <div class="ruler"><div class="ruler-track">${ticks}</div><div class="ruler-meta"><span>0:00</span><span>${s.chapters.length} 章</span><span>${fmt(s.duration)}</span></div></div>
-    <div class="label">重點</div>
+    <div class="gloss">${esc(L(s, "gloss"))}</div>
+    <p class="takeaway">${md(L(s, "takeaway"))}</p>
+    <div class="ruler"><div class="ruler-track">${ticks}</div><div class="ruler-meta"><span>0:00</span><span>${t.chapters(s.chapters.length)}</span><span>${fmt(s.duration)}</span></div></div>
+    <div class="label">${t.labelPoints}</div>
     <ul class="points">${pts}</ul>
-    <div class="label">關鍵 API / 框架</div>
+    <div class="label">${t.labelApis}</div>
     <div class="apis">${apis}</div>
-    <p class="audience">${md(s.audience)}</p>
+    <p class="audience">${md(L(s, "audience"))}</p>
     <div class="card-foot">
-      <a class="src" href="${esc(safeUrl)}" target="_blank" rel="noopener">看原片 ↗</a>
+      <a class="src" href="${esc(safeUrl)}" target="_blank" rel="noopener">${t.src}</a>
       ${claimBtn}
     </div>
   </article>`;
@@ -339,7 +411,8 @@ function matches(s) {
   if (state.hotOnly && !s.points.some((p) => p.hot)) return false;
   if (state.api && !(s.apis || []).includes(state.api)) return false;
   if (state.q) {
-    const hay = (s.title + " " + s.gloss + " " + s.takeaway + " " + s.apis.join(" ") + " " + s.categoryLabel + " " + s.points.map((p) => p.text).join(" ")).toLowerCase();
+    const hay = [s.title, s.gloss, s.gloss_en, s.takeaway, s.takeaway_en, s.apis.join(" "), s.categoryLabel, CATLABEL_EN[s.category],
+      s.points.map((p) => p.text).join(" "), (s.points_en || []).map((p) => p.text).join(" "), s.audience, s.audience_en].join(" ").toLowerCase();
     if (!hay.includes(state.q.toLowerCase())) return false;
   }
   return true;
@@ -352,17 +425,16 @@ function reflectControls() {
 }
 
 function render() {
+  const t = T();
   let shown = SESSIONS.filter(matches);
   if (state.sort === "dur-asc") shown = shown.slice().sort((a, b) => a.duration - b.duration);
   else if (state.sort === "dur-desc") shown = shown.slice().sort((a, b) => b.duration - a.duration);
   $("list").innerHTML = shown.map(cardHTML).join("");
   $("empty").style.display = shown.length ? "none" : "block";
-  $("count").textContent = shown.length;
-  $("starCount").textContent = myInterest.size;
   let secs = 0;
   for (const s of SESSIONS) if (myInterest.has(s.id)) secs += s.duration || 0;
-  $("starTime").textContent = human(secs);
-  $("claimCount").textContent = Object.keys(claimed).length;
+  $("metaLeft").textContent = t.shown(shown.length);
+  $("metaRight").innerHTML = t.stats(myInterest.size, human(secs), Object.keys(claimed).length);
   const af = $("apiFilter");
   if (state.api) { af.hidden = false; af.innerHTML = `API: <b>${esc(state.api)}</b> <span class="x">✕</span>`; }
   else af.hidden = true;
@@ -376,9 +448,9 @@ function render() {
 
 function copyLink(id, btn) {
   const url = location.origin + location.pathname + "#s=" + id;
-  const done = () => { const o = btn.textContent; btn.textContent = "已複製"; setTimeout(() => (btn.textContent = o), 1200); };
-  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(() => prompt("複製此連結:", url));
-  else prompt("複製此連結:", url);
+  const done = () => { const o = btn.textContent; btn.textContent = T().copied; setTimeout(() => (btn.textContent = o), 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(() => prompt("", url));
+  else prompt("", url);
 }
 
 async function toggleInterest(id) {
@@ -402,7 +474,7 @@ async function toggleClaim(id) {
     const r = await fetch("/api/claimed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action }) });
     const d = await r.json();
     if (d.claimed) claimed = d.claimed;
-    if (!r.ok && r.status === 409) alert("這場已被其他人認領了。");
+    if (!r.ok && r.status === 409) alert(state.lang === "en" ? "Already claimed by someone else." : "這場已被其他人認領了。");
   } catch {}
   render();
 }
@@ -415,6 +487,7 @@ $("unclaimedOnly").addEventListener("click", () => { state.unclaimedOnly = !stat
 $("mineClaimedOnly").addEventListener("click", () => { if (!me) return (location.href = "/api/auth/login"); state.mineClaimedOnly = !state.mineClaimedOnly; render(); });
 $("apiFilter").addEventListener("click", () => { state.api = ""; render(); });
 $("themeBtn").addEventListener("click", toggleTheme);
+$("langBtn").addEventListener("click", toggleLang);
 
 boot();
 </script>
