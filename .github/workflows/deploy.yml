@@ -1,0 +1,34 @@
+# OPTIONAL — only needed if you want scheduled auto-refresh of the notes.
+# The simplest path is Cloudflare Pages' Git integration (auto-deploys on push) —
+# in that case you don't need this file at all; just run `npm run notes` locally and push.
+#
+# This workflow regenerates notes and deploys via Wrangler. Add these repo secrets:
+#   ANTHROPIC_API_KEY      - for the summarize step
+#   CLOUDFLARE_API_TOKEN   - a token with "Cloudflare Pages: Edit"
+#   CLOUDFLARE_ACCOUNT_ID  - your account id
+
+name: refresh-and-deploy
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # daily 02:00 UTC; trim/remove once WWDC week is over
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Generate notes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run notes
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name=wwdc-notes

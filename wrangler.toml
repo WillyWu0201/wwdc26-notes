@@ -1,0 +1,16 @@
+name = "wwdc-notes"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "public"
+
+# KV namespace for personal marks (interest:{email}) and the shared "claimed" map.
+# Create it with:  wrangler kv namespace create NOTES_KV
+# then paste the returned id below. (For dashboard Git deploys, also add this binding
+# under Pages > Settings > Functions > KV namespace bindings.)
+[[kv_namespaces]]
+binding = "NOTES_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# Non-secret vars can live here. Secrets (GOOGLE_CLIENT_SECRET, SESSION_SECRET) must NOT —
+# set those with `wrangler pages secret put NAME` or in the dashboard as encrypted vars.
+[vars]
+# ALLOWED_EMAIL_DOMAIN = "cdcoverseas.com"   # uncomment to restrict sign-in to one domain
