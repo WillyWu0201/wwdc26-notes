@@ -27,16 +27,16 @@ interface IndexEntry { id: string; title: string; duration: number; }
 async function getIndex(): Promise<IndexEntry[]> {
   const html = await (await fetch(INDEX)).text();
   const seen = new Map<string, IndexEntry>();
-  // Each session is an <a href=".../wwdc2026/NNN/"> whose text is "Title MM:SS Title".
+  // Each session is an <a ... href=".../wwdc2026/NNN/"> card: title in <h5 class="vc-card__title">, duration in a <span>.
   const re = new RegExp(`<a[^>]+href="[^"]*\\/videos\\/play\\/wwdc${YEAR}\\/(\\d+)\\/?"[^>]*>([\\s\\S]*?)<\\/a>`, "g");
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) {
     const id = m[1];
     if (seen.has(id)) continue;
-    const text = decode(stripTags(m[2]));
-    const dur = text.match(/(\d+:\d{2}(?::\d{2})?)/);
-    const title = dur ? text.slice(0, text.indexOf(dur[1])).trim() : text;
-    seen.set(id, { id, title, duration: dur ? toSeconds(dur[1]) : 0 });
+    const inner = m[2];
+    const title = decode(stripTags((inner.match(/vc-card__title[^>]*>([\s\S]*?)<\/h5>/) || [])[1] || ""));
+    const dm = inner.match(/(\d+:\d{2}(?::\d{2})?)/);
+    seen.set(id, { id, title, duration: dm ? toSeconds(dm[1]) : 0 });
   }
   return [...seen.values()];
 }
