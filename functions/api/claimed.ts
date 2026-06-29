@@ -1,7 +1,7 @@
 import { type Env, getUser } from "../../lib/auth";
 
 // Shared team state lives under a single key  claimed  ->
-//   { [sessionId]: { email, name, at } }
+//   { [sessionId]: { email, name, at, note } }
 // Anyone can READ it (so the badge shows for everyone, even logged out).
 // Only signed-in users can claim; only the claimer can release.
 // Single-key store = last-write-wins. Fine for a small team; if you ever need
@@ -22,7 +22,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const user = await getUser(request, env);
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
-  const { id, action } = (await request.json()) as { id?: string; action?: string };
+  const { id, action, note } = (await request.json()) as { id?: string; action?: string; note?: string };
   if (typeof id !== "string") return Response.json({ error: "bad request" }, { status: 400 });
 
   const map = await readMap(env);
@@ -36,7 +36,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     if (map[id] && map[id].email !== user.email) {
       return Response.json({ error: "already claimed", claimed: map }, { status: 409 });
     }
-    map[id] = { email: user.email, name: user.name, at: Date.now() };
+    map[id] = { email: user.email, name: user.name, at: Date.now(), note: typeof note === "string" ? note.trim().slice(0, 140) : "" };
   }
 
   await env.NOTES_KV.put(KEY, JSON.stringify(map));
